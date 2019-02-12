@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">TicTacToe</string>
+    <string name="PLAYER_1_WON">The player 1 won.</string>
+    <string name="PLAYER_2_WON">The player 2 won.</string>
+    <string name="DRAW">The game is ended in a draw.</string>
+    <string name="FIRST_PLAYER_TURN">The first player\'s turn</string>
+    <string name="SECOND_PLAYER_TURN">The second player\'s turn</string>
+    <string name="RESTART_GAME">RESTART GAME</string>
+    <string name="LETS_PLAY">Let\'s play TicTacToe.</string>
+    <string name="START_GAME">Start game</string>
+</resources>

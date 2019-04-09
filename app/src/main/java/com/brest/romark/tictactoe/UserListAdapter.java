@@ -20,11 +20,11 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
 
     private List<User> mUsers;
 
-    public UserListAdapter(List<User> users) {
+    UserListAdapter(List<User> users) {
         mUsers = users;
     }
 
-    public void setmUsers(List<User> mUsers) {
+    void setmUsers(List<User> mUsers) {
         this.mUsers = mUsers;
     }
 
@@ -60,7 +60,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
         return mUsers.size();
     }
 
-    public User getUserAt(int position) {
+    User getUserAt(int position) {
         return mUsers.get(position);
     }
 

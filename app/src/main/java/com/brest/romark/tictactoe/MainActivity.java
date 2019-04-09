@@ -3,6 +3,7 @@ package com.brest.romark.tictactoe;
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
@@ -10,11 +11,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.brest.romark.tictactoe.callback.DeleteUserDbCallback;
-import com.brest.romark.tictactoe.callback.InsertAllDbCallback;
-import com.brest.romark.tictactoe.callback.SelectAllDbCallback;
+import com.brest.romark.tictactoe.callback.DbCallback;
 import com.brest.romark.tictactoe.callback.LoadJsonUserCallback;
-import com.brest.romark.tictactoe.callback.UserExistsDbCallback;
 import com.brest.romark.tictactoe.dao.UserDao;
 import com.brest.romark.tictactoe.database.GithubDatabase;
 import com.brest.romark.tictactoe.entity.User;
@@ -39,7 +37,7 @@ import androidx.room.Room;
 
 
 public class MainActivity extends AppCompatActivity implements LoadJsonUserCallback,
-        SelectAllDbCallback, InsertAllDbCallback, UserExistsDbCallback, DeleteUserDbCallback {
+        DbCallback {
 
     private Button myBtn;
     private EditText eLogin;
@@ -48,16 +46,16 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     private User currentUser;
     private UserListAdapter adapter;
 
-    private UserDao userDao;
+    private GithubDatabase db;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        GithubDatabase db = Room.databaseBuilder(getApplicationContext(),
+        db = Room.databaseBuilder(getApplicationContext(),
                 GithubDatabase.class, "github-db").build();
 
-        userDao = db.userDao();
+        UserDao userDao = db.userDao();
 
         setContentView(R.layout.activity_main);
         myBtn = findViewById(R.id.myBtn);
@@ -89,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                DeleteUserDbTask deleteUserDbTask = new DeleteUserDbTask(userDao);
+                DeleteUserDbTask deleteUserDbTask = new DeleteUserDbTask(db.userDao());
                 deleteUserDbTask.callback = MainActivity.this;
                 deleteUserDbTask.execute(adapter.getUserAt(viewHolder.getAdapterPosition()));
             }
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @Override
     public void onJsonReceived(User user) {
         currentUser = user;
-        UserExistsDbTask userExistsDbTask = new UserExistsDbTask(userDao);
+        UserExistsDbTask userExistsDbTask = new UserExistsDbTask(db.userDao());
         userExistsDbTask.callback = this;
         userExistsDbTask.execute(user.getLogin());
     }
@@ -113,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
 
     @Override
     public void onUsersInserted(Long result) {
-        SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
+        SelectAllDbTask selectAllDbTask = new SelectAllDbTask(db.userDao());
         selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
     }
@@ -121,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @Override
     public void onUserCountReceived(Boolean doesExist) {
         if (!doesExist) {
-            InsertAllDbTask insertAllDbTask = new InsertAllDbTask(userDao);
+            InsertAllDbTask insertAllDbTask = new InsertAllDbTask(db.userDao());
             insertAllDbTask.callback = this;
             insertAllDbTask.execute(currentUser);
             currentUser = null;
@@ -134,8 +132,17 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList("key", new ArrayList<Parcelable>(users));
+        Log.d("flip", "onSaveInstanceState");
+    }
+
+
+
+    @Override
     public void onUserDeleted() {
-        SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
+        SelectAllDbTask selectAllDbTask = new SelectAllDbTask(db.userDao());
         selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
         Toast.makeText(MainActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
@@ -190,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class SelectAllDbTask extends AsyncTask<Void, Void, List<User>> {
 
-        private SelectAllDbCallback callback = null;
+        private DbCallback callback = null;
 
         UserDao userDao;
 
@@ -221,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class InsertAllDbTask extends AsyncTask<User, Void, Long> {
 
-        private InsertAllDbCallback callback = null;
+        private DbCallback callback = null;
 
         UserDao userDao;
 
@@ -244,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class UserExistsDbTask extends AsyncTask<String, Void, Boolean> {
 
-        private UserExistsDbCallback callback = null;
+        private DbCallback callback = null;
 
         UserDao userDao;
 
@@ -268,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class DeleteUserDbTask extends AsyncTask<User, Void, Void> {
 
-        private DeleteUserDbCallback callback = null;
+        private DbCallback callback = null;
 
         UserDao userDao;
 

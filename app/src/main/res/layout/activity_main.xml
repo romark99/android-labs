@@ -24,11 +24,22 @@
             <!--android:layout_marginStart="8dp"-->
             <!--android:layout_marginEnd="8dp"-->
             <!--android:text="Button" />-->
+
+        <EditText
+            android:id="@+id/eLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text="Name"
+            android:hint="User's login"/>
+
         <Button
             android:id="@+id/myBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Button" />
+            android:text="Add user" />
+
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

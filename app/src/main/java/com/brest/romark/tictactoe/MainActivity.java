@@ -7,6 +7,8 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.brest.romark.tictactoe.database.UserDatabase;
 import com.brest.romark.tictactoe.entity.User;
@@ -30,6 +32,7 @@ import androidx.room.Room;
 public class MainActivity extends AppCompatActivity implements AsyncTaskCallback {
 
     private Button myBtn;
+    private EditText eLogin;
 
     private ArrayList<User> users;
     private UserListAdapter adapter;
@@ -50,12 +53,13 @@ public class MainActivity extends AppCompatActivity implements AsyncTaskCallback
 
         setContentView(R.layout.activity_main);
         myBtn = findViewById(R.id.myBtn);
+        eLogin = findViewById(R.id.eLogin);
         myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 LoadJSONTask loadJSONTask = new LoadJSONTask();
                 loadJSONTask.resultCallback = MainActivity.this;
-                loadJSONTask.execute("https://api.github.com/users");
+                loadJSONTask.execute("https://api.github.com/users/" + eLogin.getText().toString());
             }
         });
         RecyclerView rvUsers = findViewById(R.id.recyclerView);
@@ -65,13 +69,14 @@ public class MainActivity extends AppCompatActivity implements AsyncTaskCallback
     }
 
     @Override
-    public void onResultReceived(ArrayList<User> result) {
-        adapter.setmUsers(result);
+    public void onResultReceived(User result) {
+        users.add(result);
+        adapter.setmUsers(users);
         adapter.notifyDataSetChanged();
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class LoadJSONTask extends AsyncTask<String, Void, ArrayList<User>> {
+    private class LoadJSONTask extends AsyncTask<String, Void, User> {
 
         AsyncTaskCallback resultCallback = null;
 
@@ -82,30 +87,35 @@ public class MainActivity extends AppCompatActivity implements AsyncTaskCallback
         }
 
         @Override
-        protected ArrayList<User> doInBackground(String... strings) {
-
-            ArrayList<User> usersSearchResults = new ArrayList<>();
+        protected User doInBackground(String... strings) {
+            User userSearchResult = null;
             Gson gson = new Gson();
             try {
                 InputStream stream = (new URL(strings[0])).openConnection().getInputStream();
                 Reader br = new BufferedReader(new InputStreamReader(stream));
                 publishProgress();
-                usersSearchResults = gson.fromJson(br, new TypeToken<ArrayList<User>>() {}.getType());
+                userSearchResult = gson.fromJson(br, new TypeToken<User>() {}.getType());
             } catch (IOException e) {
                 e.printStackTrace();
             }
             Log.d("task", "DoInBackground");
-            return usersSearchResults;
+            return userSearchResult;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<User> usersSearchResults) {
-            super.onPostExecute(usersSearchResults);
+        protected void onPostExecute(User userSearchResult) {
+            super.onPostExecute(userSearchResult);
 
-            Log.d("result", usersSearchResults.toString());
-            resultCallback.onResultReceived(usersSearchResults);
-            resultCallback = null;
-
+            if (userSearchResult != null) {
+                Log.d("result", userSearchResult.toString());
+                resultCallback.onResultReceived(userSearchResult);
+                resultCallback = null;
+            }
+            else {
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        "The user is not found.", Toast.LENGTH_SHORT);
+                toast.show();
+            }
             Log.d("task", "OnPostExecute");
         }
     }

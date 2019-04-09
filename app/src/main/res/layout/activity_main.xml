@@ -31,14 +31,13 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="Name"
             android:hint="User's login"/>
 
         <Button
             android:id="@+id/myBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add user" />
+            android:text="Add user"/>
 
     </LinearLayout>
 

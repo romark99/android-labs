@@ -12,7 +12,7 @@ import androidx.room.Query;
 @Dao
 public interface UserDao {
 
-    @Query("SELECT * FROM user")
+    @Query("SELECT * FROM user ORDER BY date DESC")
     List<User> getAll();
 
     @Insert

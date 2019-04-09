@@ -1,7 +1,5 @@
 package com.brest.romark.tictactoe.entity;
 
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -16,6 +14,8 @@ public class User {
     private String avatar_url;
 
     private String html_url;
+
+    private long date;
 
     public String getLogin() {
         return login;
@@ -47,6 +47,14 @@ public class User {
 
     public void setHtml_url(String html_url) {
         this.html_url = html_url;
+    }
+
+    public long getDate() {
+        return date;
+    }
+
+    public void setDate(long date) {
+        this.date = date;
     }
 
     @Override

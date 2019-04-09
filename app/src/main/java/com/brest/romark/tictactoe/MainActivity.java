@@ -63,12 +63,12 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
             @Override
             public void onClick(View v) {
                 LoadJSONTask loadJSONTask = new LoadJSONTask();
-                loadJSONTask.loadJsonCallback = MainActivity.this;
+                loadJSONTask.callback = MainActivity.this;
                 loadJSONTask.execute("https://api.github.com/users/" + eLogin.getText().toString());
             }
         });
         SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
-        selectAllDbTask.selectAllDbCallback = MainActivity.this;
+        selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
 
         RecyclerView rvUsers = findViewById(R.id.recyclerView);
@@ -80,9 +80,8 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @Override
     public void onJsonReceived(User user) {
         InsertAllDbTask insertAllDbTask = new InsertAllDbTask(userDao);
-        insertAllDbTask.insertAllDbCallback = this;
+        insertAllDbTask.callback = this;
         insertAllDbTask.execute(user);
-
     }
 
     @Override
@@ -95,14 +94,14 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @Override
     public void onUsersInserted(Long result) {
         SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
-        selectAllDbTask.selectAllDbCallback = MainActivity.this;
+        selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
     }
 
     @SuppressLint("StaticFieldLeak")
     private class LoadJSONTask extends AsyncTask<String, Void, User> {
 
-        private LoadJsonUserCallback loadJsonCallback = null;
+        private LoadJsonUserCallback callback = null;
 
         @Override
         protected void onPreExecute() {
@@ -131,9 +130,10 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
             super.onPostExecute(userSearchResult);
 
             if (userSearchResult != null) {
+                userSearchResult.setDate(System.currentTimeMillis());
                 Log.d("result", userSearchResult.toString());
-                loadJsonCallback.onJsonReceived(userSearchResult);
-                loadJsonCallback = null;
+                callback.onJsonReceived(userSearchResult);
+                callback = null;
             }
             else {
                 Toast toast = Toast.makeText(getApplicationContext(),
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class SelectAllDbTask extends AsyncTask<Void, Void, List<User>> {
 
-        private SelectAllDbCallback selectAllDbCallback = null;
+        private SelectAllDbCallback callback = null;
 
         UserDao userDao;
 
@@ -164,13 +164,13 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         protected void onPostExecute(List<User> users) {
             if (users != null && users.size() != 0) {
                 Log.d("users", users.toString());
-                selectAllDbCallback.onUsersReceived(users);
+                callback.onUsersReceived(users);
             }
             else {
                 Log.d("users", "users == null OR empty");
-                selectAllDbCallback.onUsersReceived(new ArrayList<User>());
+                callback.onUsersReceived(new ArrayList<User>());
             }
-            selectAllDbCallback = null;
+            callback = null;
             Log.d("users", "OnPostExecute");
         }
     }
@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     @SuppressLint("StaticFieldLeak")
     private class InsertAllDbTask extends AsyncTask<User, Void, Long> {
 
-        private InsertAllDbCallback insertAllDbCallback = null;
+        private InsertAllDbCallback callback = null;
 
         UserDao userDao;
 
@@ -193,8 +193,8 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
 
         @Override
         protected void onPostExecute(Long id) {
-            insertAllDbCallback.onUsersInserted(id);
-            insertAllDbCallback = null;
+            callback.onUsersInserted(id);
+            callback = null;
         }
     }
 }

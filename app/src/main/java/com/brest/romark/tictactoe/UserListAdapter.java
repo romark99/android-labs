@@ -60,6 +60,10 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
         return mUsers.size();
     }
 
+    public User getUserAt(int position) {
+        return mUsers.get(position);
+    }
+
     class UserViewHolder extends RecyclerView.ViewHolder {
         TextView loginItemView;
 

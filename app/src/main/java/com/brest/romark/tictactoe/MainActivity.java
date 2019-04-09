@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.brest.romark.tictactoe.callback.DeleteUserDbCallback;
 import com.brest.romark.tictactoe.callback.InsertAllDbCallback;
 import com.brest.romark.tictactoe.callback.SelectAllDbCallback;
 import com.brest.romark.tictactoe.callback.LoadJsonUserCallback;
@@ -29,14 +30,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
 
 public class MainActivity extends AppCompatActivity implements LoadJsonUserCallback,
-        SelectAllDbCallback, InsertAllDbCallback, UserExistsDbCallback {
+        SelectAllDbCallback, InsertAllDbCallback, UserExistsDbCallback, DeleteUserDbCallback {
 
     private Button myBtn;
     private EditText eLogin;
@@ -51,8 +54,6 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        users = new ArrayList<>();
-
         GithubDatabase db = Room.databaseBuilder(getApplicationContext(),
                 GithubDatabase.class, "github-db").build();
 
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         setContentView(R.layout.activity_main);
         myBtn = findViewById(R.id.myBtn);
         eLogin = findViewById(R.id.eLogin);
+
         myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -78,6 +80,20 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         adapter = new UserListAdapter(users);
         rvUsers.setAdapter(adapter);
         rvUsers.setLayoutManager(new LinearLayoutManager(this));
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT |
+                ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                DeleteUserDbTask deleteUserDbTask = new DeleteUserDbTask(userDao);
+                deleteUserDbTask.callback = MainActivity.this;
+                deleteUserDbTask.execute(adapter.getUserAt(viewHolder.getAdapterPosition()));
+            }
+        }).attachToRecyclerView(rvUsers);
     }
 
     @Override
@@ -115,6 +131,14 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
                     "The user is already in database.", Toast.LENGTH_SHORT);
             toast.show();
         }
+    }
+
+    @Override
+    public void onUserDeleted() {
+        SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
+        selectAllDbTask.callback = MainActivity.this;
+        selectAllDbTask.execute();
+        Toast.makeText(MainActivity.this, "User deleted", Toast.LENGTH_SHORT).show();
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -231,12 +255,36 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         @Override
         protected Boolean doInBackground(String... strings) {
             int count = userDao.userCount(strings[0]);
-            return count == 1;
+            return count > 0;
         }
 
         @Override
         protected void onPostExecute(Boolean doesExist) {
             callback.onUserCountReceived(doesExist);
+            callback = null;
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class DeleteUserDbTask extends AsyncTask<User, Void, Void> {
+
+        private DeleteUserDbCallback callback = null;
+
+        UserDao userDao;
+
+        DeleteUserDbTask(UserDao userDao) {
+            this.userDao = userDao;
+        }
+
+        @Override
+        protected Void doInBackground(User... users) {
+            userDao.delete(users[0]);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            callback.onUserDeleted();
             callback = null;
         }
     }

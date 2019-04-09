@@ -9,15 +9,15 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
-//@Dao
+@Dao
 public interface UserDao {
 
-//    @Query("SELECT * FROM user")
-//    List<User> getAll();
-//
-//    @Insert
-//    void insertAll(User... users);
-//
-//    @Delete
-//    void delete(User user);
+    @Query("SELECT * FROM user")
+    List<User> getAll();
+
+    @Insert
+    long insert(User user);
+
+    @Delete
+    void delete(User user);
 }

@@ -2,6 +2,7 @@ package com.brest.romark.tictactoe;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +12,6 @@ import android.widget.TextView;
 import com.brest.romark.tictactoe.entity.User;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,7 +20,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
 
     private List<User> mUsers;
 
-    public UserListAdapter(ArrayList<User> users) {
+    public UserListAdapter(List<User> users) {
         mUsers = users;
     }
 
@@ -56,6 +56,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
 
     @Override
     public int getItemCount() {
+        Log.d("mine", mUsers.toString());
         return mUsers.size();
     }
 
@@ -66,7 +67,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
 
         ImageView imageView;
 
-        public UserViewHolder(@NonNull View itemView) {
+        UserViewHolder(@NonNull View itemView) {
             super(itemView);
             urlItemView = itemView.findViewById(R.id.tvUrl);
             loginItemView = itemView.findViewById(R.id.tvLogin);

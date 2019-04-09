@@ -1,15 +1,15 @@
 package com.brest.romark.tictactoe.entity;
 
-import java.math.BigDecimal;
-
+import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-//@Entity
+@Entity
 public class User {
 
     @PrimaryKey
-    private BigDecimal id;
+    private long id;
 
     private String login;
 
@@ -25,11 +25,11 @@ public class User {
         this.login = login;
     }
 
-    public BigDecimal getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(BigDecimal id) {
+    public void setId(long id) {
         this.id = id;
     }
 

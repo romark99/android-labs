@@ -6,7 +6,7 @@ import com.brest.romark.tictactoe.entity.User;
 import androidx.room.Database;
 import androidx.room.RoomDatabase;
 
-//@Database(entities = {User.class}, version = 1)
-public abstract class UserDatabase extends RoomDatabase {
-//    public abstract UserDao userDao();
+@Database(entities = {User.class}, version = 1)
+public abstract class GithubDatabase extends RoomDatabase {
+    public abstract UserDao userDao();
 }

@@ -1,145 +1,112 @@
 package com.brest.romark.tictactoe;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+import com.brest.romark.tictactoe.database.UserDatabase;
+import com.brest.romark.tictactoe.entity.User;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
-    private boolean isFirstPlayerTurn = true;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.util.ArrayList;
 
-    private Button[] buttons = new Button[9];
-    private Button btnStart;
-    private TextView textResult;
-    private int[] values = new int[9];
-    private final int[][] indexesOfRows = {{0,1,2}, {3,4,5}, {6,7,8}, {0,3,6}, {1,4,7}, {2,5,8}, {0,4,8}, {2,4,6}};
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
-    @SuppressLint("WrongViewCast")
+
+public class MainActivity extends AppCompatActivity implements AsyncTaskCallback {
+
+    private Button myBtn;
+
+    private ArrayList<User> users;
+    private UserListAdapter adapter;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        buttons[0] = findViewById(R.id.buttonTL);
-        buttons[1] = findViewById(R.id.buttonTC);
-        buttons[2] = findViewById(R.id.buttonTR);
-        buttons[3] = findViewById(R.id.buttonL);
-        buttons[4] = findViewById(R.id.buttonC);
-        buttons[5] = findViewById(R.id.buttonR);
-        buttons[6] = findViewById(R.id.buttonBL);
-        buttons[7] = findViewById(R.id.buttonBC);
-        buttons[8] = findViewById(R.id.buttonBR);
-        for (Button btn: buttons) {
-            btn.setOnClickListener(this);
-            btn.setBackgroundColor(Color.TRANSPARENT);
-            btn.setEnabled(false);
-        }
-        btnStart = findViewById(R.id.btnStart);
-        textResult = findViewById(R.id.textResult);
 
-        btnStart.setOnClickListener(new View.OnClickListener() {
+        users = new ArrayList<>();
+
+//        UserDatabase db = Room.databaseBuilder(getApplicationContext(),
+//                UserDatabase.class, "github-db").build();
+
+//        RecyclerView rvUsers = findViewById(R.id.recyclerView);
+//        UserListAdapter adapter = new UserListAdapter(users);
+//        rvUsers.setAdapter(adapter);
+//        rvUsers.setLayoutManager(new LinearLayoutManager(this));
+
+        setContentView(R.layout.activity_main);
+        myBtn = findViewById(R.id.myBtn);
+        myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                for (Button btn: buttons) {
-                    btn.setBackgroundColor(Color.TRANSPARENT);
-                    btn.setEnabled(true);
-                    btnStart.setEnabled(false);
-                    textResult.setText(R.string.FIRST_PLAYER_TURN);
-                    values = new int[9];
-                }
+            public void onClick(View v) {
+                LoadJSONTask loadJSONTask = new LoadJSONTask();
+                loadJSONTask.resultCallback = MainActivity.this;
+                loadJSONTask.execute("https://api.github.com/users");
             }
         });
+        RecyclerView rvUsers = findViewById(R.id.recyclerView);
+        adapter = new UserListAdapter(users);
+        rvUsers.setAdapter(adapter);
+        rvUsers.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override
-    public void onClick(View view) {
-        Button btn = (Button) view;
-        btn.setBackgroundResource(isFirstPlayerTurn ? R.drawable.cross :R.drawable.circle);
-        btn.setEnabled(false);
-        for (int i = 0; i < buttons.length; i++) {
-            if (btn == buttons[i]) {
-                values[i] = isFirstPlayerTurn ? 1 : 2;
-            }
-        }
-        int who = whoWon();
-        switch (who) {
-            case 1:
-                textResult.setText(R.string.PLAYER_1_WON);
-                finishGame();
-                break;
-            case 2:
-                textResult.setText(R.string.PLAYER_2_WON);
-                finishGame();
-                break;
-            case 3:
-                textResult.setText(R.string.DRAW);
-                finishGame();
-                break;
-            default:
-                isFirstPlayerTurn = !isFirstPlayerTurn;
-                textResult.setText(isFirstPlayerTurn ?
-                        R.string.FIRST_PLAYER_TURN :
-                        R.string.SECOND_PLAYER_TURN);
-                break;
-        }
+    public void onResultReceived(ArrayList<User> result) {
+        adapter.setmUsers(result);
+        adapter.notifyDataSetChanged();
     }
 
-    /**
-     * 0 - if the game is not finished
-     * 1 - if (X) the first player wins
-     * 2 - if (O) the second player wins
-     * 3 - if a draw
-     * @return
-     */
-    private int whoWon() {
-        boolean isDraw = true;
-        for (int[] row: indexesOfRows) {
-            int n = checkRow(row);
-            if (n == 1) {
-                return 1;
-            }
-            else if (n == 2) {
-                return 2;
-            }
-            else if (isDraw && n == 0) {
-                isDraw = false;
-            }
-        }
-        if (isDraw) {
-            return 3;
-        }
-        return 0;
-    }
+    @SuppressLint("StaticFieldLeak")
+    private class LoadJSONTask extends AsyncTask<String, Void, ArrayList<User>> {
 
-    /**
-     * 0 - if the row is not finished
-     * 1 - if (X) the first player wins
-     * 2 - if (O) the second player wins
-     * -1 - if the row is fulfilled
-     * @return
-     */
-    private int checkRow(int[] indexes) {
-       switch (values[indexes[0]] * values[indexes[1]] * values[indexes[2]]) {
-           case 1:
-               return 1;
-           case 8:
-               return 2;
-           case 0:
-               return 0;
-       }
-       return -1;
-    }
+        AsyncTaskCallback resultCallback = null;
 
-    private void finishGame() {
-        btnStart = findViewById(R.id.btnStart);
-        for (Button btn: buttons) {
-            btn.setEnabled(false);
-
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.d("task", "PreExecute");
         }
-        btnStart.setEnabled(true);
-        btnStart.setText(R.string.RESTART_GAME);
+
+        @Override
+        protected ArrayList<User> doInBackground(String... strings) {
+
+            ArrayList<User> usersSearchResults = new ArrayList<>();
+            Gson gson = new Gson();
+            try {
+                InputStream stream = (new URL(strings[0])).openConnection().getInputStream();
+                Reader br = new BufferedReader(new InputStreamReader(stream));
+                publishProgress();
+                usersSearchResults = gson.fromJson(br, new TypeToken<ArrayList<User>>() {}.getType());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Log.d("task", "DoInBackground");
+            return usersSearchResults;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<User> usersSearchResults) {
+            super.onPostExecute(usersSearchResults);
+
+            Log.d("result", usersSearchResults.toString());
+            resultCallback.onResultReceived(usersSearchResults);
+            resultCallback = null;
+
+            Log.d("task", "OnPostExecute");
+        }
     }
 }

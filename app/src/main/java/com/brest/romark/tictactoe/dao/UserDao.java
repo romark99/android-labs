@@ -15,6 +15,9 @@ public interface UserDao {
     @Query("SELECT * FROM user ORDER BY date DESC")
     List<User> getAll();
 
+    @Query("SELECT COUNT(*) FROM user WHERE login = :login")
+    Integer userCount(String login);
+
     @Insert
     long insert(User user);
 

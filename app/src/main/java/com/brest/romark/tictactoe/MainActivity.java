@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.brest.romark.tictactoe.callback.InsertAllDbCallback;
 import com.brest.romark.tictactoe.callback.SelectAllDbCallback;
 import com.brest.romark.tictactoe.callback.LoadJsonUserCallback;
+import com.brest.romark.tictactoe.callback.UserExistsDbCallback;
 import com.brest.romark.tictactoe.dao.UserDao;
 import com.brest.romark.tictactoe.database.GithubDatabase;
 import com.brest.romark.tictactoe.entity.User;
@@ -35,12 +36,13 @@ import androidx.room.Room;
 
 
 public class MainActivity extends AppCompatActivity implements LoadJsonUserCallback,
-        SelectAllDbCallback, InsertAllDbCallback {
+        SelectAllDbCallback, InsertAllDbCallback, UserExistsDbCallback {
 
     private Button myBtn;
     private EditText eLogin;
 
     private List<User> users;
+    private User currentUser;
     private UserListAdapter adapter;
 
     private UserDao userDao;
@@ -67,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
                 loadJSONTask.execute("https://api.github.com/users/" + eLogin.getText().toString());
             }
         });
+
         SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
         selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
@@ -79,9 +82,10 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
 
     @Override
     public void onJsonReceived(User user) {
-        InsertAllDbTask insertAllDbTask = new InsertAllDbTask(userDao);
-        insertAllDbTask.callback = this;
-        insertAllDbTask.execute(user);
+        currentUser = user;
+        UserExistsDbTask userExistsDbTask = new UserExistsDbTask(userDao);
+        userExistsDbTask.callback = this;
+        userExistsDbTask.execute(user.getLogin());
     }
 
     @Override
@@ -96,6 +100,21 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         SelectAllDbTask selectAllDbTask = new SelectAllDbTask(userDao);
         selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
+    }
+
+    @Override
+    public void onUserCountReceived(Boolean doesExist) {
+        if (!doesExist) {
+            InsertAllDbTask insertAllDbTask = new InsertAllDbTask(userDao);
+            insertAllDbTask.callback = this;
+            insertAllDbTask.execute(currentUser);
+            currentUser = null;
+        }
+        else {
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "The user is already in database.", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -194,6 +213,30 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         @Override
         protected void onPostExecute(Long id) {
             callback.onUsersInserted(id);
+            callback = null;
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class UserExistsDbTask extends AsyncTask<String, Void, Boolean> {
+
+        private UserExistsDbCallback callback = null;
+
+        UserDao userDao;
+
+        UserExistsDbTask(UserDao userDao) {
+            this.userDao = userDao;
+        }
+
+        @Override
+        protected Boolean doInBackground(String... strings) {
+            int count = userDao.userCount(strings[0]);
+            return count == 1;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean doesExist) {
+            callback.onUserCountReceived(doesExist);
             callback = null;
         }
     }

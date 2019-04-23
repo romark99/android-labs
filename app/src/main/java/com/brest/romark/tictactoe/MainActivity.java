@@ -30,6 +30,8 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,6 +43,11 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
 
     private Button myBtn;
     private EditText eLogin;
+
+    private FragmentTransaction fragmentTransaction;
+
+    private UserListFragment userListFragment;
+    private UserViewFragment userViewFragment;
 
     private List<User> users;
     private User currentUser;
@@ -56,8 +63,15 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
                 GithubDatabase.class, "github-db").build();
 
         UserDao userDao = db.userDao();
+//
+//        fragmentTransaction =
+//                getFragmentManager().beginTransaction();
 
         setContentView(R.layout.activity_main);
+
+        userListFragment = new UserListFragment();
+        userViewFragment = new UserViewFragment();
+
         myBtn = findViewById(R.id.myBtn);
         eLogin = findViewById(R.id.eLogin);
 
@@ -74,12 +88,21 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         selectAllDbTask.callback = MainActivity.this;
         selectAllDbTask.execute();
 
-        RecyclerView rvUsers = findViewById(R.id.recyclerView);
+//        RecyclerView rvUsers = findViewById(R.id.recyclerView);
+
+        FragmentManager fm = getSupportFragmentManager();
+
+        UserListFragment fragment = (UserListFragment)fm.findFragmentById(R.id.myFragment);
+        assert fragment != null;
+        RecyclerView rvUsers = fragment.getRvUsers();
+
         adapter = new UserListAdapter(users);
         rvUsers.setAdapter(adapter);
         rvUsers.setLayoutManager(new LinearLayoutManager(this));
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT |
                 ItemTouchHelper.RIGHT) {
+
+
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
                 return false;
@@ -131,14 +154,12 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList("key", new ArrayList<Parcelable>(users));
-        Log.d("flip", "onSaveInstanceState");
-    }
-
-
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+//        outState.putParcelableArrayList("key", new ArrayList<Parcelable>(users));
+//        Log.d("flip", "onSaveInstanceState");
+//    }
 
     @Override
     public void onUserDeleted() {

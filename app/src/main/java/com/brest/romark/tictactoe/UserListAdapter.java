@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.brest.romark.tictactoe.entity.User;
 import com.squareup.picasso.Picasso;
@@ -17,6 +18,10 @@ import java.util.List;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserViewHolder> {
+
+    private RecyclerView recyclerView;
+
+    private final View.OnClickListener listItemClickListener = new ListItemClickListener();
 
     private List<User> mUsers;
 
@@ -35,9 +40,17 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
         LayoutInflater inflater = LayoutInflater.from(context);
 
         View userView = inflater.inflate(R.layout.user_list_item, viewGroup, false);
+        userView.setOnClickListener(listItemClickListener);
 
         UserViewHolder viewHolder = new UserViewHolder(userView);
         return viewHolder;
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@androidx.annotation.NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+
+        this.recyclerView = recyclerView;
     }
 
     @Override
@@ -56,6 +69,11 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
 
     @Override
     public int getItemCount() {
+
+        //?????????????????????????????????????????????
+        if (mUsers == null) {
+            return 0;
+        }
         Log.d("mine", mUsers.toString());
         return mUsers.size();
     }
@@ -79,4 +97,15 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserVi
         }
     }
 
+    private class ListItemClickListener implements View.OnClickListener  {
+
+        @Override
+        public void onClick(View view) {
+            int itemPosition = recyclerView.getChildLayoutPosition(view);
+            User item = mUsers.get(itemPosition);
+            Toast toast = Toast.makeText(MyApplication.getAppContext(),
+                    item.getLogin(), Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
 }

@@ -3,18 +3,20 @@ package com.brest.romark.tictactoe;
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.brest.romark.tictactoe.adapter.UserListAdapter;
 import com.brest.romark.tictactoe.callback.DbCallback;
-import com.brest.romark.tictactoe.callback.LoadJsonUserCallback;
+import com.brest.romark.tictactoe.callback.LoadUserJsonCallback;
 import com.brest.romark.tictactoe.dao.UserDao;
 import com.brest.romark.tictactoe.database.GithubDatabase;
 import com.brest.romark.tictactoe.entity.User;
+import com.brest.romark.tictactoe.fragment.UserListFragment;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -37,22 +39,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
 
-public class MainActivity extends AppCompatActivity implements LoadJsonUserCallback,
+public class MainActivity extends AppCompatActivity implements LoadUserJsonCallback,
         DbCallback {
+    
 
     private Button myBtn;
     private EditText eLogin;
 
-    private FragmentTransaction fragmentTransaction;
-
-    private UserListFragment userListFragment;
-    private UserViewFragment userViewFragment;
+    private static FragmentManager andxFragmentManager;
 
     private List<User> users;
     private User currentUser;
     private UserListAdapter adapter;
 
     private GithubDatabase db;
+
+    public static FragmentManager getAndxFragmentManager() {
+        return andxFragmentManager;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,14 +66,10 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
                 GithubDatabase.class, "github-db").build();
 
         UserDao userDao = db.userDao();
-//
-//        fragmentTransaction =
-//                getFragmentManager().beginTransaction();
+
+        andxFragmentManager = getSupportFragmentManager();
 
         setContentView(R.layout.activity_main);
-
-        userListFragment = new UserListFragment();
-        userViewFragment = new UserViewFragment();
 
         myBtn = findViewById(R.id.myBtn);
         eLogin = findViewById(R.id.eLogin);
@@ -77,9 +77,9 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         myBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LoadJSONTask loadJSONTask = new LoadJSONTask();
-                loadJSONTask.callback = MainActivity.this;
-                loadJSONTask.execute("https://api.github.com/users/" + eLogin.getText().toString());
+                UserJSONTask userJSONTask = new UserJSONTask();
+                userJSONTask.callback = MainActivity.this;
+                userJSONTask.execute("https://api.github.com/users/" + eLogin.getText().toString());
             }
         });
 
@@ -92,12 +92,21 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         FragmentManager fm = getSupportFragmentManager();
 
         UserListFragment fragment = (UserListFragment)fm.findFragmentById(R.id.myFragment);
-        assert fragment != null;
-        RecyclerView rvUsers = fragment.getRvUsers();
 
-        adapter = new UserListAdapter(users);
-        rvUsers.setAdapter(adapter);
-        rvUsers.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new UserListAdapter(this, users);
+//        rvUsers.setAdapter(adapter);
+//        rvUsers.setLayoutManager(new LinearLayoutManager(this));
+
+        UserListFragment newFragment = new UserListFragment(adapter, new LinearLayoutManager(this));
+
+        assert fragment != null;
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.add(R.id.myFragment, newFragment);
+        transaction.commit();
+
+        RecyclerView rvUsers = newFragment.getRvUsers();
+
+
 
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT |
                 ItemTouchHelper.RIGHT) {
@@ -118,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     }
 
     @Override
-    public void onJsonReceived(User user) {
+    public void onUserJsonReceived(User user) {
         currentUser = user;
         UserExistsDbTask userExistsDbTask = new UserExistsDbTask(db.userDao());
         userExistsDbTask.callback = this;
@@ -154,13 +163,6 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
         }
     }
 
-//    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putParcelableArrayList("key", new ArrayList<Parcelable>(users));
-//        Log.d("flip", "onSaveInstanceState");
-//    }
-
     @Override
     public void onUserDeleted() {
         SelectAllDbTask selectAllDbTask = new SelectAllDbTask(db.userDao());
@@ -170,9 +172,9 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class LoadJSONTask extends AsyncTask<String, Void, User> {
+    private class UserJSONTask extends AsyncTask<String, Void, User> {
 
-        private LoadJsonUserCallback callback = null;
+        private LoadUserJsonCallback callback = null;
 
         @Override
         protected void onPreExecute() {
@@ -203,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements LoadJsonUserCallb
             if (userSearchResult != null) {
                 userSearchResult.setDate(System.currentTimeMillis());
                 Log.d("result", userSearchResult.toString());
-                callback.onJsonReceived(userSearchResult);
+                callback.onUserJsonReceived(userSearchResult);
                 callback = null;
             }
             else {

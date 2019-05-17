@@ -1,13 +1,10 @@
 package com.brest.romark.tictactoe.entity;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity
-public class User implements Parcelable {
+public class User {
 
     @PrimaryKey
     private long id;
@@ -63,47 +60,4 @@ public class User implements Parcelable {
     public User() {
     }
 
-    private User(Parcel in) {
-        id = in.readLong();
-        login = in.readString();
-        avatar_url = in.readString();
-        html_url = in.readString();
-        date = in.readLong();
-    }
-
-    private static final Parcelable.Creator<User> CREATOR = new Parcelable.Creator<User>() {
-        @Override
-        public User createFromParcel(Parcel in) {
-            return new User(in);
-        }
-
-        @Override
-        public User[] newArray(int size) {
-            return new User[size];
-        }
-    };
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "login='" + login + '\'' +
-                ", id=" + id +
-                ", avatar_url='" + avatar_url + '\'' +
-                ", html_url='" + html_url + '\'' +
-                '}';
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeLong(id);
-        parcel.writeString(login);
-        parcel.writeString(avatar_url);
-        parcel.writeString(html_url);
-        parcel.writeLong(date);
-    }
 }

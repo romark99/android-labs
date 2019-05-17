@@ -1,4 +1,4 @@
-package com.brest.romark.tictactoe;
+package com.brest.romark.convolutionalnn;
 
 import android.content.Context;
 import androidx.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.brest.romark.tictactoe", appContext.getPackageName());
+        assertEquals("com.brest.romark.convolutionalnn", appContext.getPackageName());
     }
 }

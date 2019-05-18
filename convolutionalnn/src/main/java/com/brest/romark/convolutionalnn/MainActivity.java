@@ -1,6 +1,7 @@
 package com.brest.romark.convolutionalnn;
 
 import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraDevice;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
@@ -33,6 +34,26 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private CameraDevice mCameraDevice;
+    private CameraDevice.StateCallback mCameraDeviceStateCallback = new CameraDevice.StateCallback() {
+        @Override
+        public void onOpened(CameraDevice cameraDevice) {
+            mCameraDevice = cameraDevice;
+        }
+
+        @Override
+        public void onDisconnected(CameraDevice cameraDevice) {
+            cameraDevice.close();
+            mCameraDevice = null;
+        }
+
+        @Override
+        public void onError(CameraDevice cameraDevice, int i) {
+            cameraDevice.close();
+            mCameraDevice = null;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceBundle) {
         super.onCreate(savedInstanceBundle);
@@ -53,6 +74,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        closeCamera();
+        super.onPause();
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         View decorView = getWindow().getDecorView();
@@ -64,6 +91,13 @@ public class MainActivity extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             );
+        }
+    }
+
+    private void closeCamera() {
+        if (mCameraDevice != null) {
+            mCameraDevice.close();
+            mCameraDevice = null;
         }
     }
 }
